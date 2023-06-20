@@ -1,0 +1,9 @@
+*.swp
+venv/*
+node_modules/*
+htdocs/resources/*
+static/app/*
+.compile.trigger
+tmp/*
+var/*
+etc/*
