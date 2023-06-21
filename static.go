@@ -1,4 +1,4 @@
-package static
+package main
 
 import (
 	"embed"
@@ -6,12 +6,12 @@ import (
 	"net/http"
 )
 
-//go:embed static
+//go:embed htdocs
 var webDir embed.FS
 
 func StaticServerChroot() http.Handler {
 
-	chrootedWebDir, err := fs.Sub(webDir, "web_dist")
+	chrootedWebDir, err := fs.Sub(webDir, "htdocs")
 	if err != nil {
 		panic(err)
 	}
@@ -22,7 +22,7 @@ func StaticServer() http.Handler {
 }
 
 func Templates() fs.FS {
-	chrootedWebDir, err := fs.Sub(webDir, "app")
+	chrootedWebDir, err := fs.Sub(webDir, "htdocs")
 	if err != nil {
 		panic(err)
 	}

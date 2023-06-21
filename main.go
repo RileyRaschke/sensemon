@@ -12,8 +12,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/spf13/viper"
 
-	database "db"
-	"static"
+	"sensemon/api"
+	"sensemon/collector"
+	database "sensemon/db"
+	"sensemon/sensor"
+	st "sensemon/sensor/sensortype"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -44,6 +47,18 @@ func main() {
 		}
 	}()
 
+	// Build and Start the collection service
+	collectorService := collector.NewCollectorService(dbc,
+		&collector.CollectorServiceOptions{
+			PollingInverval: "10s",
+			Sensors: []*sensor.Sensor{
+				&sensor.Sensor{Endpoint: "http://10.1.1.50/", SensorType: st.ParseType("DHT")},
+			},
+		},
+	)
+
+	go collectorService.Run()
+
 	// Create routers
 	router = chi.NewRouter()
 
@@ -54,12 +69,10 @@ func main() {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 
-	staticServer := static.StaticServer()
-
-	// auto doc at root (public)
-	router.Mount("/app", staticServer)
+	// bind routes
 	router.Get("/favicon.ico", noData)
-	router.Get("/", root)
+	router.Mount("/api/", api.NewApiController(dbc).Handler())
+	router.Mount("/", StaticServerChroot())
 
 	// Run the server
 	port := ":" + viper.GetString("app.port")
@@ -81,6 +94,7 @@ func main() {
 		panic(err)
 	}
 	srv.Close()
+	collectorService.Stop()
 }
 
 func noData(w http.ResponseWriter, r *http.Request) {
