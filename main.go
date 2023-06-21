@@ -16,7 +16,7 @@ import (
 	"sensemon/collector"
 	database "sensemon/db"
 	"sensemon/sensor"
-	st "sensemon/sensor/sensortype"
+	"sensemon/sensor/sensortypes"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -52,7 +52,7 @@ func main() {
 		&collector.CollectorServiceOptions{
 			PollingInverval: "10s",
 			Sensors: []*sensor.Sensor{
-				&sensor.Sensor{Endpoint: "http://10.1.1.50/", SensorType: st.ParseType("DHT")},
+				&sensor.Sensor{Endpoint: "http://10.1.1.50/", SensorType: sensortypes.ParseType("DHT")},
 			},
 		},
 	)

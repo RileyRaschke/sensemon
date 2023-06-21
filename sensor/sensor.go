@@ -2,16 +2,18 @@ package sensor
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
-	st "sensemon/sensor/sensortype"
+	"sensemon/sensor/sensortypes"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type Sensor struct {
-	Endpoint   string        `mapstructure:"endpoint"`
-	SensorType st.SensorType `mapstructure:"type"`
+	Endpoint   string                 `mapstructure:"endpoint"`
+	SensorType sensortypes.SensorType `mapstructure:"type"`
 }
 
 type SensorData interface {
@@ -21,26 +23,28 @@ type SensorData interface {
 type DhtSensorData struct {
 	rawData   string
 	dataStore map[string]string
-	DeviceID  string `json:"DeviceID", db:"SR_DEVICE_ID"`
-	Farenheit string `json:"Fahrenheit", db:"SR_FARENHEIT"`
-	Humidity  string `json:"Humidity", db"SR_HUMIDITY"`
+	DeviceID  string    `json:"DeviceID" db:"SR_DEVICE_ID"`
+	Date      time.Time `json:"ts" db:"SR_DATE"`
+	Farenheit float32   `json:"Fahrenheit" db:"SR_FARENHEIT"`
+	Humidity  float32   `json:"Humidity" db:"SR_HUMIDITY"`
 }
 
-func (s *Sensor) GetData() SensorData {
+func (s *Sensor) GetData() (SensorData, error) {
 	switch s.SensorType {
-	case st.DHT:
+	case sensortypes.DHT:
 		d := &DhtSensorData{}
 		resp, err := http.Get(s.Endpoint)
 		if err != nil {
 			log.Errorf("Failed to refresh sensor data with error: %s", err)
-			return nil
+			return nil, err
 		}
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(resp.Body)
 		json.Unmarshal([]byte(body), d)
-		return d
+		d.Date = time.Now()
+		return d, nil
 	default:
-		return nil
+		return nil, errors.New("Unknown sensor type configured")
 	}
 }
 

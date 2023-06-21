@@ -13,6 +13,7 @@ type Connection struct {
 }
 
 func Connect(args *ConnectArgs) (*Connection, error) {
+	sqlx.BindDriver("oracle", sqlx.NAMED)
 	var err error
 	if args.Password == "" {
 		if args.PasswordCommand != "" {

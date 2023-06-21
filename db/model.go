@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"sensemon/sensor"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -18,9 +19,41 @@ type TabInfo struct {
 	RowCount  int64  `db:"RowCount" json:"rowCount"`
 }
 
-type UserRoles struct {
-	RoleGroup string `db:"role_group" json:"roleGroup"`
-	RoleCode  string `db:"role" json:"role"`
+func (dbc *Connection) InsertDhtData(data *sensor.DhtSensorData) error {
+	sql := `insert into sensemon.sensorreads (
+       sr_date,
+	   sr_device_id, 
+	   sr_farenheit,
+	   sr_humidity
+	) values (
+	   :SR_DATE,
+	   :SR_DEVICE_ID,
+	   round(:SR_FARENHEIT,2),
+	   round(:SR_HUMIDITY,2) 
+	)`
+	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
+	defer cancel()
+
+	conn, err := dbc.Connx(ctx)
+	if err != nil {
+		log.Errorf("Failed to get a connection: %s", err)
+		return err
+	}
+
+	tx, err := conn.BeginTxx(ctx, nil)
+	if err != nil {
+		log.Errorf("Failed to begin transaction: %s", err)
+		return err
+	}
+
+	_, err = tx.NamedExec(sql, data)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	tx.Commit()
+	return nil
 }
 
 func (dbc *Connection) AllTables() ([]TabInfo, error) {

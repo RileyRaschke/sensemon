@@ -1,8 +1,6 @@
 package collector
 
 import (
-	"encoding/json"
-	"fmt"
 	"sensemon/db"
 	"time"
 
@@ -17,11 +15,11 @@ type CollectorServiceOptions struct {
 }
 
 type CollectorService struct {
-	dbc            *db.Connection
-	pollInterval   time.Duration
-	opts           *CollectorServiceOptions
-	quit           chan int
-	lastCollection time.Time
+	dbc                *db.Connection
+	pollInterval       time.Duration
+	opts               *CollectorServiceOptions
+	quit               chan int
+	lastCollectionTime time.Time
 }
 
 func NewCollectorService(db *db.Connection, opts *CollectorServiceOptions) *CollectorService {
@@ -38,7 +36,7 @@ func (s *CollectorService) Run() {
 		case <-s.quit:
 			return
 		default:
-			if time.Since(s.lastCollection) >= s.pollInterval {
+			if time.Since(s.lastCollectionTime) >= s.pollInterval {
 				s.CollectData()
 			}
 			time.Sleep(100 * time.Millisecond)
@@ -47,12 +45,30 @@ func (s *CollectorService) Run() {
 }
 
 func (s *CollectorService) CollectData() {
-	log.Info("Logging temps...")
-	s.lastCollection = time.Now()
-	for _, sensor := range s.opts.Sensors {
-		d := sensor.GetData()
-		jsonData, _ := json.MarshalIndent(d, "", "  ")
-		fmt.Printf("%s\n", string(jsonData))
+	log.Trace("Logging temps...")
+	s.lastCollectionTime = time.Now()
+	for _, sen := range s.opts.Sensors {
+		d, err := sen.GetData()
+		//jsonData, _ := json.MarshalIndent(d, "", "  ")
+		//fmt.Printf("%s\n", string(jsonData))
+		if err != nil {
+			log.Errorf("Skipping data insert due to sensor error: %s", err)
+			continue
+		}
+		if d == nil {
+			log.Errorf("No data returned from sensor at endpoint: %s", sen.Endpoint)
+			continue
+		}
+		switch d.(type) {
+		case *sensor.DhtSensorData:
+			err := s.dbc.InsertDhtData(d.(*sensor.DhtSensorData))
+			if err != nil {
+				log.Errorf("Data insert failed with error: %s", err)
+			}
+			continue
+		default:
+			continue
+		}
 	}
 }
 
