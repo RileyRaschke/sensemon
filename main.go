@@ -50,7 +50,7 @@ func main() {
 	// Build and Start the collection service
 	collectorService := collector.NewCollectorService(dbc,
 		&collector.CollectorServiceOptions{
-			PollingInverval: "10s",
+			PollingInverval: "15s",
 			Sensors: []*sensor.Sensor{
 				&sensor.Sensor{Endpoint: "http://10.1.1.50/", SensorType: sensortypes.ParseType("DHT")},
 			},

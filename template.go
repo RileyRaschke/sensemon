@@ -1,5 +1,12 @@
 package main
 
+/*
+* NOTE:
+*	This can't be part of main unless the controller is shifted up to main
+*		- or -
+*	This and `static.go` are shifted down to their own packages... (including embeded htdocs)
+ */
+
 import (
 	"html/template"
 	"net/http"

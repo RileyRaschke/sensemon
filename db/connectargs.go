@@ -31,8 +31,8 @@ func (args *ConnectArgs) ToConnectionString() string {
 	if args.SID != "" {
 		urloptions["SID"] = args.SID
 	}
+	urloptions["trace file"] = "trace.log"
 	if args.WalletLocation != "" {
-		//urloptions["TRACE_FILE"] = "trace.log"
 		urloptions["SSL"] = "enable"
 		urloptions["wallet"] = args.WalletLocation
 	}

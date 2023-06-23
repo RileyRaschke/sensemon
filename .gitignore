@@ -8,3 +8,4 @@ tmp/*
 var/*
 etc/*
 sensemon
+*.log

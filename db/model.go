@@ -34,13 +34,7 @@ func (dbc *Connection) InsertDhtData(data *sensor.DhtSensorData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
 	defer cancel()
 
-	conn, err := dbc.Connx(ctx)
-	if err != nil {
-		log.Errorf("Failed to get a connection: %s", err)
-		return err
-	}
-
-	tx, err := conn.BeginTxx(ctx, nil)
+	tx, err := dbc.BeginTxx(ctx, nil)
 	if err != nil {
 		log.Errorf("Failed to begin transaction: %s", err)
 		return err
@@ -56,6 +50,59 @@ func (dbc *Connection) InsertDhtData(data *sensor.DhtSensorData) error {
 	return nil
 }
 
+func (dbc *Connection) AllDhtDataForSensor(deviceId string) ([]*sensor.DhtSensorData, error) {
+	return dbc.AllDhtDataForSensorInterval(deviceId, 5)
+}
+
+func (dbc *Connection) AllDhtDataForSensorInterval(deviceId string, minuteInterval int) ([]*sensor.DhtSensorData, error) {
+	allData := make([]*sensor.DhtSensorData, 0)
+	q := `
+		with rws as (
+		  select trunc ( sr_date ) dy,
+				 trunc ( sr_date, 'mi' ) mins,
+				 :1 / 1440 time_interval,
+				 sr_device_id,
+				 sr_farenheit,
+				 sr_humidity
+		  from   sensemon.sensorreads
+         where sr_device_id = :2
+		), intervals as (
+		  select dy + (
+				   floor ( ( mins - dy ) / time_interval ) * time_interval
+				 ) start_datetime,
+				 sr_device_id,
+				 sr_farenheit,
+				 sr_humidity
+		  from   rws
+		)
+		  select start_datetime as sr_date,
+				 sr_device_id,
+				 round(avg(sr_farenheit),2) as sr_farenheit,
+				 round(avg(sr_humidity),2) as sr_humidity
+			from intervals
+		  group  by start_datetime, sr_device_id
+		  order  by start_datetime
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
+	defer cancel()
+
+	rows, err := dbc.QueryxContext(ctx, q, minuteInterval, deviceId)
+	defer rows.Close()
+	if err != nil {
+		log.Errorf("Can't query: %s", err)
+		return allData, err
+	}
+
+	for rows.Next() {
+		row := &sensor.DhtSensorData{}
+		if err := rows.StructScan(row); err != nil {
+			return allData, err
+		}
+		allData = append(allData, row)
+	}
+	return allData, nil
+}
+
 func (dbc *Connection) AllTables() ([]TabInfo, error) {
 	allData := make([]TabInfo, 0)
 	q := `
@@ -69,13 +116,7 @@ func (dbc *Connection) AllTables() ([]TabInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
 	defer cancel()
 
-	conn, err := dbc.Connx(ctx)
-	if err != nil {
-		log.Errorf("Failed to get a connection: %s", err)
-		return allData, err
-	}
-
-	rows, err := conn.QueryxContext(ctx, q)
+	rows, err := dbc.QueryxContext(ctx, q)
 
 	if err != nil {
 		log.Errorf("Can't query: %s", err)
