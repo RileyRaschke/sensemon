@@ -12,6 +12,7 @@ type ConnectArgs struct {
 	Password         string
 	PasswordCommand  string
 	WalletLocation   string
+	TraceFile        string
 	Server           string
 	Port             int
 	Service          string
