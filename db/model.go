@@ -66,6 +66,7 @@ func (dbc *Connection) AllDhtDataForSensorInterval(deviceId string, minuteInterv
 				 sr_humidity
 		  from   sensemon.sensorreads
          where sr_device_id = :2
+		   and sr_date >= sysdate-2
 		), intervals as (
 		  select dy + (
 				   floor ( ( mins - dy ) / time_interval ) * time_interval
