@@ -13,30 +13,65 @@
 <div>
   <canvas id="myChart"></canvas>
 </div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js" integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+
+   var x = [];
+   var y = [];
+   var minVal = 1000;
+   var maxVal = 0;
+
+   async function GetData() {
+      res = await jQuery.ajax({
+         type: 'GET',
+         url: '/api/sensordata/esp01/5',
+         headers: {
+            Accept: "application/json"
+         },
+         success: function(data, textStatus, xhr){
+            for(i = 0; i < data.length; ++i){
+                  x.push(data[i].ts);
+                  y.push(data[i].Fahrenheit);
+                  if( data[i].Fahrenheit < minVal ) {
+                        minVal = data[i].Fahrenheit -1.0;
+                  }
+                  if( data[i].Fahrenheit > maxVal ) {
+                        maxVal = data[i].Fahrenheit +1.0;
+                  }
+            }
+         }
+      });
+      return res
+   };
+
+$(document).ready( async function() {
+  await GetData();
+
   const ctx = document.getElementById('myChart');
 
   new Chart(ctx, {
-    type: 'bar',
+    type: 'line',
     data: {
-      labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+      labels: x,
       datasets: [{
-        label: '# of Votes',
-        data: [12, 19, 3, 5, 2, 3],
+        label: 'Fahrenheit',
+        data: y,
         borderWidth: 1
       }]
     },
     options: {
       scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
+            y: {
+                  min: minVal,
+                  max: maxVal,
+               }
+         },
     }
   });
+
+});
 </script>
 </body>
 </html>

@@ -12,6 +12,11 @@ test:
 dist: clean
 	$(GO) build -ldflags "-X main.Version=$(DISTVER)"
 
+air: 
+	mkdir -p var/air_temp
+	$(RM) var/air_temp/sensemon
+	$(GO) build -o var/air_temp/sensemon -ldflags "-X $(PKG)/main.Version=$(DISTVER)"
+
 race:
 	$(GO) run -ldflags "-X main.Version=$(DISTVER)" --race .
 
