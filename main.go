@@ -51,7 +51,7 @@ func main() {
 	if !*webOnly {
 		collectorService := collector.NewCollectorService(dbc,
 			&collector.CollectorServiceOptions{
-				PollingInverval: viper.String("collector.polling_interval"),
+				PollingInverval: viper.GetString("collector.polling_interval"),
 				Sensors:         sensor.SensorsFromViper(),
 			},
 		)
