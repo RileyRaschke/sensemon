@@ -11,7 +11,8 @@ tmp_dir = "var/air_tmp"
   exclude_regex = ["_test.go"]
   exclude_unchanged = true
   follow_symlink = false
-  full_bin = "DISABLE_CSP=1 ./var/air_temp/sensemon"
+  full_bin = "DISABLE_CSP=1 ./var/air_temp/sensemon --webOnly"
+  #full_bin = "DISABLE_CSP=1 ./var/air_temp/sensemon"
   include_dir = []
   include_ext = ["go","yaml","trigger","html"]
   include_file = []

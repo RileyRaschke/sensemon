@@ -16,16 +16,16 @@ import (
 	"sensemon/collector"
 	database "sensemon/db"
 	"sensemon/sensor"
-	"sensemon/sensor/sensortypes"
 
 	log "github.com/sirupsen/logrus"
 )
 
 var (
-	Version string
-	signals chan os.Signal
-	dbc     *database.Connection
-	router  *chi.Mux
+	Version          string
+	signals          chan os.Signal
+	dbc              *database.Connection
+	router           *chi.Mux
+	collectorService *collector.CollectorService
 )
 
 func init() {
@@ -48,16 +48,17 @@ func main() {
 	}()
 
 	// Build and Start the collection service
-	collectorService := collector.NewCollectorService(dbc,
-		&collector.CollectorServiceOptions{
-			PollingInverval: "5s",
-			Sensors: []*sensor.Sensor{
-				&sensor.Sensor{Endpoint: "http://10.1.1.50/", SensorType: sensortypes.ParseType("DHT")},
+	if !*webOnly {
+		collectorService := collector.NewCollectorService(dbc,
+			&collector.CollectorServiceOptions{
+				PollingInverval: viper.String("collector.polling_interval"),
+				Sensors:         sensor.SensorsFromViper(),
 			},
-		},
-	)
+		)
 
-	go collectorService.Run()
+		go collectorService.Run()
+		defer collectorService.Stop()
+	}
 
 	// Create routers
 	router = chi.NewRouter()
@@ -94,7 +95,6 @@ func main() {
 		panic(err)
 	}
 	srv.Close()
-	collectorService.Stop()
 }
 
 func noData(w http.ResponseWriter, r *http.Request) {

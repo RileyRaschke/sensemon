@@ -18,7 +18,7 @@ var (
 	envPrefix         = "SENSEMON"
 	configSearchPaths = []string{".", "./etc", "$HOME/etc", "/etc"}
 	genConfig         = getopt.BoolLong("genconfig", 'x', "Write example config to \"./"+yamlFile+"\"")
-	docGen            = getopt.BoolLong("docs", 0x00, "Generate API Docs")
+	webOnly           = getopt.BoolLong("webOnly", 0x00, "Disable ecollector service")
 )
 
 func init() {
@@ -40,6 +40,8 @@ func init() {
 	viper.SetDefault("app.port", "3001")
 	viper.SetDefault("app.proxyHostsCidr", []string{})
 	viper.SetDefault("app.realIpHeader", "X-Forwarded-For")
+
+	viper.SetDefault("collector.polling_interval", "5s")
 
 	viper.SetDefault("db.Type", "oracle")
 	viper.SetDefault("db.Username", strings.ToUpper(os_user.Username))

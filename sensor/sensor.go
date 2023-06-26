@@ -9,6 +9,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type Sensor struct {
@@ -27,6 +28,19 @@ type DhtSensorData struct {
 	Date      time.Time `json:"ts" db:"SR_DATE"`
 	Farenheit float32   `json:"Fahrenheit" db:"SR_FARENHEIT"`
 	Humidity  float32   `json:"Humidity" db:"SR_HUMIDITY"`
+}
+
+func SensorsFromViper() []*Sensor {
+	c := viper.Get("sensors")
+	sensors := make([]*Sensor, len(c.([]interface{})))
+	for idx, v := range c.([]interface{}) {
+		m := v.(map[string]interface{})
+		sensors[idx] = &Sensor{
+			Endpoint:   m["endpoint"].(string),
+			SensorType: sensortypes.ParseType(m["sensor_type"].(string)),
+		}
+	}
+	return sensors
 }
 
 func (s *Sensor) GetData() (SensorData, error) {

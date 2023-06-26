@@ -10,3 +10,4 @@ create table sensemon.sensorreads (
 
 grant select,insert on sensemon.sensorreads to app_sensemon;
 
+create synonym app_sensemon.sensorreads for sensemon.sensorreads;

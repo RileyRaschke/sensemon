@@ -20,7 +20,7 @@ type TabInfo struct {
 }
 
 func (dbc *Connection) InsertDhtData(data *sensor.DhtSensorData) error {
-	sql := `insert into sensemon.sensorreads (
+	sql := `insert into sensorreads (
        sr_date,
 	   sr_device_id, 
 	   sr_farenheit,
@@ -64,7 +64,7 @@ func (dbc *Connection) AllDhtDataForSensorInterval(deviceId string, minuteInterv
 				 sr_device_id,
 				 sr_farenheit,
 				 sr_humidity
-		  from   sensemon.sensorreads
+		  from   sensorreads
          where sr_device_id = :2
 		   and sr_date >= sysdate-2
 		), intervals as (
