@@ -26,8 +26,6 @@
    var TemperatureChart;
    var HumidityChart;
    var xAxisLabels = {};
-   var y = [];
-   var yH = [];
    var SensorNames = {};
    var SensorTypes = {};
    var SensorIndex = [];
@@ -82,7 +80,7 @@
       return res
    }
 
-   async function ChartIt(){
+   function ChartTemps(){
      if( TemperatureChart ) {
        TemperatureChart.destroy();
      }
@@ -107,6 +105,9 @@
             },
        }
      });
+   }
+
+   function ChartHumid(){
      if( HumidityChart ) {
        HumidityChart.destroy();
      }
@@ -133,14 +134,19 @@
      });
    }
 
+   async function DrawIndexCharts(){
+     ChartTemps();
+     ChartHumid();
+   }
+
 $(document).ready( async function() {
   await GetSensors();
   await GetData();
 
-  ChartIt();
+  DrawIndexCharts();
 
   $( window ).on( "orientationchange", function( event ) {
-    ChartIt();
+    DrawIndexCharts();
   });
 
 });
