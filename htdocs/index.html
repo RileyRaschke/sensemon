@@ -34,12 +34,12 @@
          success: function(data, textStatus, xhr){
             for(i = 0; i < data.length; ++i){
                   x.push(data[i].ts);
-                  y.push(data[i].Fahrenheit);
-                  if( data[i].Fahrenheit < minVal ) {
-                        minVal = data[i].Fahrenheit -1.0;
+                  y.push(data[i].fahrenheit);
+                  if( data[i].fahrenheit < minVal ) {
+                        minVal = data[i].fahrenheit -1.0;
                   }
-                  if( data[i].Fahrenheit > maxVal ) {
-                        maxVal = data[i].Fahrenheit +1.0;
+                  if( data[i].fahrenheit > maxVal ) {
+                        maxVal = data[i].fahrenheit +1.0;
                   }
             }
          }
