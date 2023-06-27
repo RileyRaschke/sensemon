@@ -88,7 +88,7 @@ func (dbc *Connection) AllDhtDataInterval(minuteInterval int) ([]*sensor.DhtSens
 				 sr_farenheit,
 				 sr_humidity
 		  from   sensorreads
-         where sr_date >= sysdate-2
+         where sr_date >= sysdate-1
 		), intervals as (
 		  select dy + (
 				   floor ( ( mins - dy ) / time_interval ) * time_interval
@@ -138,7 +138,7 @@ func (dbc *Connection) AllDhtDataForSensorInterval(deviceId string, minuteInterv
 				 sr_humidity
 		  from   sensorreads
          where sr_device_id = :2
-		   and sr_date >= sysdate-2
+		   and sr_date >= sysdate-1
 		), intervals as (
 		  select dy + (
 				   floor ( ( mins - dy ) / time_interval ) * time_interval

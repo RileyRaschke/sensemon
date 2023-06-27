@@ -11,68 +11,130 @@
 </head>
 <body>
 <div>
-  <canvas id="myChart"></canvas>
+  <canvas id="temperatureChartCanvas"></canvas>
+  <br>
+  <canvas id="humidityChartCanvas"></canvas>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js" integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+
+   const temperatureChartCanvas = document.getElementById('temperatureChartCanvas');
+   const humidityChartCanvas = document.getElementById('humidityChartCanvas');
+
    var TemperatureChart;
-   var x = [];
+   var HumidityChart;
+   var xAxisLabels = {};
    var y = [];
-   var minVal = 1000;
-   var maxVal = 0;
-   const ctx = document.getElementById('myChart');
+   var yH = [];
+   var SensorNames = {};
+   var SensorTypes = {};
+   var SensorIndex = [];
+   var SensorData = [];
+   var TempDataArray = []
+   var HumiDataArray = []
+
+   async function GetSensors() {
+      res = await jQuery.ajax({
+         type: 'GET',
+         url: 'api/sensors',
+         headers: {
+            Accept: "application/json"
+         },
+         success: function(data, textStatus, xhr){
+               for(i = 0; i< data.length; ++i){
+                     SensorNames[data[i].deviceID] = data[i].name;
+                     SensorTypes[data[i].deviceID] = data[i].type;
+                     SensorIndex[data[i].deviceID] = i;
+                     TempDataArray[i] = {
+                           "label": data[i].name,
+                           "data": [],
+                           "borderWidth": 1,
+                     };
+                     HumiDataArray[i] = {
+                           "label": data[i].name,
+                           "data": [],
+                           "borderWidth": 1,
+                     };
+               }
+               SensorData = data;
+         }
+      });
+      return res
+   }
 
    async function GetData() {
       res = await jQuery.ajax({
          type: 'GET',
-         url: 'api/sensordata/esp01/15',
+         url: 'api/allsensors/15',
          headers: {
             Accept: "application/json"
          },
          success: function(data, textStatus, xhr){
             for(i = 0; i < data.length; ++i){
-                  x.push(data[i].ts);
-                  y.push(data[i].fahrenheit);
-                  if( data[i].fahrenheit < minVal ) {
-                        minVal = data[i].fahrenheit -1.0;
-                  }
-                  if( data[i].fahrenheit > maxVal ) {
-                        maxVal = data[i].fahrenheit +1.0;
-                  }
+                  xAxisLabels[data[i].ts] = 1
+                  TempDataArray[SensorIndex[data[i].deviceID]]['data'].push(data[i].fahrenheit);
+                  HumiDataArray[SensorIndex[data[i].deviceID]]['data'].push(data[i].humidity);
             }
          }
       });
       return res
    }
 
-async function ChartIt(){
-  if( TemperatureChart ) {
-    TemperatureChart.destroy();
-  }
-  TemperatureChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: x,
-      datasets: [{
-        label: 'Fahrenheit',
-        data: y,
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-            y: {
-                  min: minVal,
-                  max: maxVal,
-               }
+   async function ChartIt(){
+     if( TemperatureChart ) {
+       TemperatureChart.destroy();
+     }
+     TemperatureChart = new Chart(temperatureChartCanvas, {
+       type: 'line',
+       data: {
+         labels: Object.keys(xAxisLabels),
+         datasets: TempDataArray,
+       },
+       options: {
+         plugins: {
+           title: {
+             display: true,
+             text: "24H Temperature",
+           },
          },
-    }
-  });
-}
+         scales: {
+               y: {
+                     type: 'linear',
+                     display: true,
+                  },
+            },
+       }
+     });
+     if( HumidityChart ) {
+       HumidityChart.destroy();
+     }
+     HumidityChart = new Chart(humidityChartCanvas, {
+       type: 'line',
+       data: {
+         labels: Object.keys(xAxisLabels),
+         datasets: HumiDataArray,
+       },
+       options: {
+         plugins: {
+           title: {
+             display: true,
+             text: "24H Humidity",
+           },
+         },
+         scales: {
+               y: {
+                     type: 'linear',
+                     display: true,
+                  },
+            },
+       }
+     });
+   }
 
 $(document).ready( async function() {
+  await GetSensors();
   await GetData();
 
   ChartIt();
