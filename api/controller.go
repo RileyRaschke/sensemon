@@ -24,10 +24,22 @@ func NewApiController(dbc *db.Connection) *ApiController {
 
 func (c *ApiController) Handler() *chi.Mux {
 	r := chi.NewRouter()
+	r.Get("/sensors", c.sensors)
 	r.Get("/sensordata/{sensor_id}", c.sensorData)
 	r.Get("/sensordata/{sensor_id}/{interval}", c.sensorDataInterval)
+	r.Get("/allsensors/{interval}", c.allSensorsInterval)
 	c.router = r
 	return r
+}
+
+func (c *ApiController) sensors(w http.ResponseWriter, r *http.Request) {
+	data, err := c.dbc.Sensors()
+	if err != nil {
+		log.Errorf("DB Error: %w", err)
+		view.JsonErrorMsg(w, http.StatusInternalServerError, "Database Error")
+		return
+	}
+	view.AsJson(w, data)
 }
 
 func (c *ApiController) sensorData(w http.ResponseWriter, r *http.Request) {
@@ -59,6 +71,23 @@ func (c *ApiController) sensorDataInterval(w http.ResponseWriter, r *http.Reques
 
 	log.Infof("Searching for sensor_id: %s", sensor_id)
 	data, err := c.dbc.AllDhtDataForSensorInterval(sensor_id, interval)
+
+	if err != nil {
+		log.Errorf("DB Error: %w", err)
+		view.JsonErrorMsg(w, http.StatusInternalServerError, "Database Error")
+		return
+	}
+	view.AsJson(w, data)
+}
+
+func (c *ApiController) allSensorsInterval(w http.ResponseWriter, r *http.Request) {
+	interval, err := strconv.Atoi(chi.URLParam(r, "interval"))
+	if err != nil {
+		log.Errorf("Bad Request: %w", err)
+		view.JsonErrorMsg(w, http.StatusBadRequest, "Bad Request")
+		return
+	}
+	data, err := c.dbc.AllDhtDataInterval(interval)
 
 	if err != nil {
 		log.Errorf("DB Error: %w", err)

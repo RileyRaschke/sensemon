@@ -50,8 +50,80 @@ func (dbc *Connection) InsertDhtData(data *sensor.DhtSensorData) error {
 	return nil
 }
 
+func (dbc *Connection) Sensors() ([]*sensor.Sensor, error) {
+	sensors := make([]*sensor.Sensor, 0)
+	sql := `select * from sensor`
+	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
+	defer cancel()
+
+	rows, err := dbc.QueryxContext(ctx, sql)
+	if err != nil {
+		log.Errorf("Can't query: %s", err)
+		return sensors, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		row := &sensor.Sensor{}
+		if err := rows.StructScan(row); err != nil {
+			return sensors, err
+		}
+		sensors = append(sensors, row)
+	}
+	return sensors, nil
+}
+
 func (dbc *Connection) AllDhtDataForSensor(deviceId string) ([]*sensor.DhtSensorData, error) {
-	return dbc.AllDhtDataForSensorInterval(deviceId, 5)
+	return dbc.AllDhtDataForSensorInterval(deviceId, 10)
+}
+
+func (dbc *Connection) AllDhtDataInterval(minuteInterval int) ([]*sensor.DhtSensorData, error) {
+	allData := make([]*sensor.DhtSensorData, 0)
+	q := `
+		with rws as (
+		  select trunc ( sr_date ) dy,
+				 trunc ( sr_date, 'mi' ) mins,
+				 :1 / 1440 time_interval,
+				 sr_device_id,
+				 sr_farenheit,
+				 sr_humidity
+		  from   sensorreads
+         where sr_date >= sysdate-2
+		), intervals as (
+		  select dy + (
+				   floor ( ( mins - dy ) / time_interval ) * time_interval
+				 ) start_datetime,
+				 sr_device_id,
+				 sr_farenheit,
+				 sr_humidity
+		  from   rws
+		)
+		  select start_datetime as sr_date,
+				 sr_device_id,
+				 round(avg(sr_farenheit),2) as sr_farenheit,
+				 round(avg(sr_humidity),2) as sr_humidity
+			from intervals
+		  group  by start_datetime, sr_device_id
+		  order  by start_datetime
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
+	defer cancel()
+
+	rows, err := dbc.QueryxContext(ctx, q, minuteInterval)
+	if err != nil {
+		log.Errorf("Can't query: %s", err)
+		return allData, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		row := &sensor.DhtSensorData{}
+		if err := rows.StructScan(row); err != nil {
+			return allData, err
+		}
+		allData = append(allData, row)
+	}
+	return allData, nil
 }
 
 func (dbc *Connection) AllDhtDataForSensorInterval(deviceId string, minuteInterval int) ([]*sensor.DhtSensorData, error) {
@@ -88,11 +160,11 @@ func (dbc *Connection) AllDhtDataForSensorInterval(deviceId string, minuteInterv
 	defer cancel()
 
 	rows, err := dbc.QueryxContext(ctx, q, minuteInterval, deviceId)
-	defer rows.Close()
 	if err != nil {
 		log.Errorf("Can't query: %s", err)
 		return allData, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		row := &sensor.DhtSensorData{}
@@ -118,12 +190,10 @@ func (dbc *Connection) AllTables() ([]TabInfo, error) {
 	defer cancel()
 
 	rows, err := dbc.QueryxContext(ctx, q)
-
 	if err != nil {
 		log.Errorf("Can't query: %s", err)
 		return allData, err
 	}
-
 	defer rows.Close()
 
 	for rows.Next() {
@@ -163,7 +233,6 @@ func (dbc *Connection) TableExists(table_name string) (bool, error) {
 		log.Errorf("Can't query: %s", err)
 		return false, err
 	}
-
 	defer rows.Close()
 
 	res := ""

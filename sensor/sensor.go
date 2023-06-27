@@ -13,8 +13,10 @@ import (
 )
 
 type Sensor struct {
-	Endpoint   string                 `mapstructure:"endpoint"`
-	SensorType sensortypes.SensorType `mapstructure:"type"`
+	DeviceID   string                 `json:"deviceID" db:"SENSOR_DEVICE_ID"`
+	Endpoint   string                 `json:"-" db:"SENSOR_ADDRESS"`
+	SensorType sensortypes.SensorType `json:"type" db:"SENSOR_TYPE_ID"`
+	Name       string                 `json:"name" db:"SENSOR_NAME"`
 }
 
 type SensorData interface {
@@ -24,10 +26,10 @@ type SensorData interface {
 type DhtSensorData struct {
 	rawData   string
 	dataStore map[string]string
-	DeviceID  string    `json:"DeviceID" db:"SR_DEVICE_ID"`
+	DeviceID  string    `json:"deviceID" db:"SR_DEVICE_ID"`
 	Date      time.Time `json:"ts" db:"SR_DATE"`
-	Farenheit float32   `json:"Fahrenheit" db:"SR_FARENHEIT"`
-	Humidity  float32   `json:"Humidity" db:"SR_HUMIDITY"`
+	Farenheit float32   `json:"fahrenheit" db:"SR_FARENHEIT"`
+	Humidity  float32   `json:"humidity" db:"SR_HUMIDITY"`
 }
 
 func SensorsFromViper() []*Sensor {
