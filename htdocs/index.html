@@ -17,11 +17,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-
+   var TemperatureChart;
    var x = [];
    var y = [];
    var minVal = 1000;
    var maxVal = 0;
+   const ctx = document.getElementById('myChart');
 
    async function GetData() {
       res = await jQuery.ajax({
@@ -44,14 +45,13 @@
          }
       });
       return res
-   };
+   }
 
-$(document).ready( async function() {
-  await GetData();
-
-  const ctx = document.getElementById('myChart');
-
-  new Chart(ctx, {
+async function ChartIt(){
+  if( TemperatureChart ) {
+    TemperatureChart.destroy();
+  }
+  TemperatureChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: x,
@@ -70,8 +70,19 @@ $(document).ready( async function() {
          },
     }
   });
+}
+
+$(document).ready( async function() {
+  await GetData();
+
+  ChartIt();
+
+  $( window ).on( "orientationchange", function( event ) {
+    ChartIt();
+  });
 
 });
+
 </script>
 </body>
 </html>

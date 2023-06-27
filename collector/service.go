@@ -46,11 +46,8 @@ func (s *CollectorService) Run() {
 
 func (s *CollectorService) CollectData() {
 	log.Trace("Logging temps...")
-	s.lastCollectionTime = time.Now()
 	for _, sen := range s.opts.Sensors {
 		d, err := sen.GetData()
-		//jsonData, _ := json.MarshalIndent(d, "", "  ")
-		//fmt.Printf("%s\n", string(jsonData))
 		if err != nil {
 			log.Errorf("Skipping data insert due to sensor error: %s", err)
 			continue
@@ -70,6 +67,7 @@ func (s *CollectorService) CollectData() {
 			continue
 		}
 	}
+	s.lastCollectionTime = time.Now()
 }
 
 func (s *CollectorService) Stop() {
