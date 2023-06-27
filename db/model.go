@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"sensemon/model"
 	"sensemon/sensor"
 	"time"
 
@@ -173,6 +174,50 @@ func (dbc *Connection) AllDhtDataForSensorInterval(deviceId string, minuteInterv
 		}
 		allData = append(allData, row)
 	}
+	return allData, nil
+}
+
+func (dbc *Connection) LatestDhtReadings() ([]*model.LatestDhtSensorData, error) {
+	allData := make([]*model.LatestDhtSensorData, 0)
+	q := `
+	select sensor_name,
+       (select sr_farenheit
+          from sensorreads f
+         where f.sr_device_id = latest.sensor_device_id
+           and f.sr_date = latest.last_entry_date
+           and rownum = 1
+         ) as FAHRENHEIT,
+         (select sr_humidity
+          from sensorreads h
+         where h.sr_device_id = latest.sensor_device_id
+           and h.sr_date = latest.last_entry_date
+           and rownum = 1
+         ) as HUMIDITY,
+         latest.LAST_ENTRY_DATE
+  from ( select sensor_name, sensor_device_id, max(sr_date) last_entry_date
+           from sensor, sensorreads
+          where sr_device_id = sensor_device_id
+          group by sensor_name, sensor_device_id
+          order by sensor_name ) latest
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
+	defer cancel()
+
+	rows, err := dbc.QueryxContext(ctx, q)
+	if err != nil {
+		log.Errorf("Can't query: %s", err)
+		return allData, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		row := &model.LatestDhtSensorData{}
+		if err := rows.StructScan(&row); err != nil {
+			return allData, err
+		}
+		allData = append(allData, row)
+	}
+
 	return allData, nil
 }
 

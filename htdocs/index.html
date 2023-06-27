@@ -7,15 +7,33 @@
   <meta name="author" content="Riley Raschke">
   <!--<link rel='stylesheet' href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" />-->
   <!--<link rel="stylesheet" href="css/styles.min.css">-->
+  <link rel="stylesheet" href="//cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
   <title>Sensor Monitor</title>
 </head>
 <body>
 <div>
+<h2>Current Readings</h2>
+<table id="currentData" class="display">
+    <thead>
+        <tr>
+           <td>Location</td>
+           <td>Fahrenheit</td>
+           <td>Humidity</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+        </tr>
+    </tbody>
+</table>
+<br>
+<h2>History</h2>
   <canvas id="temperatureChartCanvas"></canvas>
   <br>
   <canvas id="humidityChartCanvas"></canvas>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js" integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="//cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
@@ -26,12 +44,24 @@
    var TemperatureChart;
    var HumidityChart;
    var xAxisLabels = {};
-   var SensorNames = {};
-   var SensorTypes = {};
    var SensorIndex = [];
-   var SensorData = [];
    var TempDataArray = []
    var HumiDataArray = []
+   var LatestData = []
+
+   async function GetLatestReads() {
+      res = await jQuery.ajax({
+         type: 'GET',
+         url: 'api/sensors/latest',
+         headers: {
+            Accept: "application/json"
+         },
+         success: function(data, textStatus, xhr){
+               LatestData = data;
+         }
+      });
+      return res
+   }
 
    async function GetSensors() {
       res = await jQuery.ajax({
@@ -42,8 +72,6 @@
          },
          success: function(data, textStatus, xhr){
                for(i = 0; i< data.length; ++i){
-                     SensorNames[data[i].deviceID] = data[i].name;
-                     SensorTypes[data[i].deviceID] = data[i].type;
                      SensorIndex[data[i].deviceID] = i;
                      TempDataArray[i] = {
                            "label": data[i].name,
@@ -56,7 +84,6 @@
                            "borderWidth": 1,
                      };
                }
-               SensorData = data;
          }
       });
       return res
@@ -78,6 +105,20 @@
          }
       });
       return res
+   }
+
+   function DrawLatestTable(){
+      $('#currentData').DataTable({
+        "searching": false,
+        "paging": false,
+        "info": false,
+        "data": LatestData,
+          columns: [
+              { data: 'sensor' },
+              { data: 'fahrenheit' },
+              { data: 'humidity' },
+          ]
+      });
    }
 
    function ChartTemps(){
@@ -140,6 +181,8 @@
    }
 
 $(document).ready( async function() {
+  await GetLatestReads();
+  DrawLatestTable();
   await GetSensors();
   await GetData();
 

@@ -25,6 +25,7 @@ func NewApiController(dbc *db.Connection) *ApiController {
 func (c *ApiController) Handler() *chi.Mux {
 	r := chi.NewRouter()
 	r.Get("/sensors", c.sensors)
+	r.Get("/sensors/latest", c.latestSensorReadings)
 	r.Get("/sensordata/{sensor_id}", c.sensorData)
 	r.Get("/sensordata/{sensor_id}/{interval}", c.sensorDataInterval)
 	r.Get("/allsensors/{interval}", c.allSensorsInterval)
@@ -34,6 +35,16 @@ func (c *ApiController) Handler() *chi.Mux {
 
 func (c *ApiController) sensors(w http.ResponseWriter, r *http.Request) {
 	data, err := c.dbc.Sensors()
+	if err != nil {
+		log.Errorf("DB Error: %w", err)
+		view.JsonErrorMsg(w, http.StatusInternalServerError, "Database Error")
+		return
+	}
+	view.AsJson(w, data)
+}
+
+func (c *ApiController) latestSensorReadings(w http.ResponseWriter, r *http.Request) {
+	data, err := c.dbc.LatestDhtReadings()
 	if err != nil {
 		log.Errorf("DB Error: %w", err)
 		view.JsonErrorMsg(w, http.StatusInternalServerError, "Database Error")
