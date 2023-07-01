@@ -56,6 +56,10 @@ func (s *CollectorService) CollectData() {
 			log.Errorf("No data returned from sensor at endpoint: %s", sen.Endpoint)
 			continue
 		}
+		if d.GetDeviceId() == "" {
+			log.Errorf("No DeviceID returned from sensor at endpoint: %s", sen.Endpoint)
+			continue
+		}
 		switch d.(type) {
 		case *sensor.DhtSensorData:
 			err := s.dbc.InsertDhtData(d.(*sensor.DhtSensorData))
