@@ -43,7 +43,7 @@
 
    var TemperatureChart;
    var HumidityChart;
-   var xAxisLabels = {};
+   var xAxisLabels = [];
    var SensorIndex = [];
    var TempDataArray = []
    var HumiDataArray = []
@@ -97,10 +97,17 @@
             Accept: "application/json"
          },
          success: function(data, textStatus, xhr){
+            var xAxisTimestamps = {};
             for(i = 0; i < data.length; ++i){
-                  xAxisLabels[data[i].ts] = 1
+                  xAxisTimestamps[data[i].ts] = 1
                   TempDataArray[SensorIndex[data[i].deviceID]]['data'].push(data[i].fahrenheit);
                   HumiDataArray[SensorIndex[data[i].deviceID]]['data'].push(data[i].humidity);
+            }
+            var stamps = Object.keys(xAxisTimestamps);
+            stamps.sort();
+            for(i = 0; i < stamps.length; ++i){
+               d = new Date(Date.parse(stamps[i]));
+               xAxisLabels.push( d.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }));
             }
          }
       });
@@ -128,7 +135,7 @@
      TemperatureChart = new Chart(temperatureChartCanvas, {
        type: 'line',
        data: {
-         labels: Object.keys(xAxisLabels),
+         labels: xAxisLabels,
          datasets: TempDataArray,
        },
        options: {
@@ -155,7 +162,7 @@
      HumidityChart = new Chart(humidityChartCanvas, {
        type: 'line',
        data: {
-         labels: Object.keys(xAxisLabels),
+         labels: xAxisLabels,
          datasets: HumiDataArray,
        },
        options: {
