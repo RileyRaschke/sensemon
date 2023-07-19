@@ -44,6 +44,7 @@
    var TemperatureChart;
    var HumidityChart;
    var xAxisLabels = [];
+   var SensorId = [];
    var SensorIndex = [];
    var TempDataArray = []
    var HumiDataArray = []
@@ -72,6 +73,7 @@
          },
          success: function(data, textStatus, xhr){
                for(i = 0; i< data.length; ++i){
+                     SensorId.push(data[i].deviceID);
                      SensorIndex[data[i].deviceID] = i;
                      TempDataArray[i] = {
                            "label": data[i].name,
@@ -98,16 +100,34 @@
          },
          success: function(data, textStatus, xhr){
             var xAxisTimestamps = {};
+            var sensorData = {};
             for(i = 0; i < data.length; ++i){
-                  xAxisTimestamps[data[i].ts] = 1
-                  TempDataArray[SensorIndex[data[i].deviceID]]['data'].push(data[i].fahrenheit);
-                  HumiDataArray[SensorIndex[data[i].deviceID]]['data'].push(data[i].humidity);
+                  ts = data[i].ts;
+                  sid = SensorIndex[data[i].deviceID];
+                  xAxisTimestamps[ts] = 1;
+                  if( sensorData[sid] == null ){
+                        sensorData[sid] = {};
+                  }
+                  sensorData[sid][ts] = {
+                        'temp': data[i].fahrenheit,
+                        'humi': data[i].humidity,
+                     };
             }
             var stamps = Object.keys(xAxisTimestamps);
             stamps.sort();
             for(i = 0; i < stamps.length; ++i){
                d = new Date(Date.parse(stamps[i]));
                xAxisLabels.push( d.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }));
+               for(sidx = 0; sidx < SensorId.length; ++sidx){
+                     sid = SensorIndex[SensorId[sidx]];
+                     if( sensorData[sid][stamps[i]] != null){
+                        TempDataArray[sid]['data'].push(sensorData[sid][stamps[i]].temp);
+                        HumiDataArray[sid]['data'].push(sensorData[sid][stamps[i]].humi);
+                     } else {
+                        TempDataArray[sid]['data'].push(null);
+                        HumiDataArray[sid]['data'].push(null);
+                     }
+               }
             }
          }
       });
