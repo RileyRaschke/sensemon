@@ -117,7 +117,12 @@
             stamps.sort();
             for(i = 0; i < stamps.length; ++i){
                d = new Date(Date.parse(stamps[i]));
-               xAxisLabels.push( d.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }));
+               if( "12 AM" == d.toLocaleString('en-US', { hour: 'numeric'}) ) {
+                  xAxisLabels.push( d.toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }));
+               } else {
+                  xAxisLabels.push( d.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }));
+               }
+
                for(sidx = 0; sidx < SensorId.length; ++sidx){
                      sid = SensorIndex[SensorId[sidx]];
                      if( sensorData[sid][stamps[i]] != null){
@@ -162,7 +167,7 @@
          plugins: {
            title: {
              display: true,
-             text: "24H Temperature",
+             text: "48H Temperature",
            },
          },
          scales: {
@@ -189,7 +194,7 @@
          plugins: {
            title: {
              display: true,
-             text: "24H Humidity",
+             text: "48H Humidity",
            },
          },
          scales: {
