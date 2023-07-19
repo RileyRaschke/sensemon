@@ -36,7 +36,7 @@ func init() {
 func main() {
 	log.Infof("Starting %s", Version)
 
-	dbc, err := dbConnect()
+	dbc, err := database.FromViper(viper.Sub("db"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -102,20 +102,4 @@ func noData(w http.ResponseWriter, r *http.Request) {
 }
 func root(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/app/", 302)
-}
-
-func dbConnect() (*database.Connection, error) {
-	return database.Connect(
-		&database.ConnectArgs{
-			DbType:          viper.GetString("db.Type"),
-			Username:        viper.GetString("db.Username"),
-			Password:        viper.GetString("db.Password"),
-			PasswordCommand: viper.GetString("db.PasswordCommand"),
-			WalletLocation:  viper.GetString("db.WalletLocation"),
-			Server:          viper.GetString("db.Server"),
-			Port:            viper.GetInt("db.Port"),
-			Service:         viper.GetString("db.Service"),
-			SID:             viper.GetString("db.SID"),
-			Opts:            viper.Get("db.Options").(map[string]any),
-		})
 }

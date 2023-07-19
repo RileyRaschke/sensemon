@@ -1,24 +1,18 @@
 package db
 
 import (
-	"strings"
-
-	go_ora "github.com/sijms/go-ora/v2"
+	"fmt"
 )
 
 type ConnectArgs struct {
-	DbType           string
-	Username         string
-	Password         string
-	PasswordCommand  string
-	WalletLocation   string
-	TraceFile        string
-	Server           string
-	Port             int
-	Service          string
-	SID              string
-	ConnectionString string
-	Opts             map[string]interface{}
+	Driver          string
+	Username        string
+	Password        string
+	PasswordCommand string
+	Server          string
+	Port            int
+	Service         string
+	Opts            map[string]interface{}
 }
 
 func (args *ConnectArgs) String() string {
@@ -28,20 +22,52 @@ func (args *ConnectArgs) String() string {
 }
 
 func (args *ConnectArgs) ToConnectionString() string {
-	urloptions := make(map[string]string)
-	if args.SID != "" {
-		urloptions["SID"] = args.SID
-	}
-	if args.TraceFile != "" {
-		urloptions["trace file"] = args.TraceFile
-	}
-	if args.WalletLocation != "" {
-		urloptions["SSL"] = "enable"
-		urloptions["wallet"] = args.WalletLocation
-	}
+	opts := ""
 	for key, val := range args.Opts {
-		urloptions[strings.ToUpper(key)] = val.(string)
+		switch val.(type) {
+		case int:
+			opts = opts + fmt.Sprintf(`%s=%d`, key, val.(int))
+			break
+		case bool:
+			opts = opts + fmt.Sprintf(`%s=%b`, key, val.(string))
+			break
+		default: // string
+			opts = opts + fmt.Sprintf(`%s="%s"`, key, val.(string))
+		}
 	}
-	url := go_ora.BuildUrl(args.Server, args.Port, args.Service, args.Username, args.Password, urloptions)
-	return url
+
+	connStr := fmt.Sprintf(`user="%s" password="%s" connectString="%s" %s`,
+		args.Username,
+		args.GetPass(),
+		args.DSN(),
+		opts,
+	)
+	return connStr
+}
+
+func (args *ConnectArgs) DSN() string {
+	return fmt.Sprintf("%s:%d/%s",
+		args.Server,
+		args.Port,
+		args.Service,
+	)
+}
+
+func (args *ConnectArgs) GetPass() string {
+	var err error
+	if args.Password == "" {
+		if args.PasswordCommand != "" {
+			args.Password, err = passwordFromCommand(args.PasswordCommand)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+	if args.Password == "" {
+		args.Password, err = passwordFromShell()
+		if err != nil {
+			panic(err)
+		}
+	}
+	return args.Password
 }
