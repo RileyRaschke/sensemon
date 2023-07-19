@@ -43,15 +43,13 @@ func init() {
 
 	viper.SetDefault("collector.polling_interval", "5s")
 
-	viper.SetDefault("db.Type", "godror")
+	viper.SetDefault("db.Driver", "godror")
 	viper.SetDefault("db.Username", strings.ToUpper(os_user.Username))
 	viper.SetDefault("db.Password", "")
 	viper.SetDefault("db.PasswordCommand", "")
-	viper.SetDefault("db.WalletLocation", "")
 	viper.SetDefault("db.Server", "localhost")
 	viper.SetDefault("db.Port", "1521")
 	viper.SetDefault("db.Service", "")
-	viper.SetDefault("db.SID", "")
 	viper.SetDefault("db.Options", make(map[string]string))
 
 	getopt.SetUsage(func() { usage() })
