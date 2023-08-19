@@ -1,18 +1,18 @@
 package db
 
 import (
-	"fmt"
+	go_ora "github.com/sijms/go-ora/v2"
 )
 
 type ConnectArgs struct {
-	Driver          string
-	Username        string
-	Password        string
-	PasswordCommand string
-	Server          string
-	Port            int
-	Service         string
-	Opts            map[string]interface{}
+	Username         string
+	Password         string
+	PasswordCommand  string
+	Server           string
+	Port             int
+	Service          string
+	ConnectionString string
+	Opts             map[string]interface{}
 }
 
 func (args *ConnectArgs) String() string {
@@ -22,38 +22,16 @@ func (args *ConnectArgs) String() string {
 }
 
 func (args *ConnectArgs) ToConnectionString() string {
-	opts := ""
+	args.GetPass()
+	urloptions := make(map[string]string)
 	for key, val := range args.Opts {
-		switch val.(type) {
-		case int:
-			opts = opts + fmt.Sprintf(`%s=%d`, key, val.(int))
-			break
-		case bool:
-			opts = opts + fmt.Sprintf(`%s=%b`, key, val.(string))
-			break
-		default: // string
-			opts = opts + fmt.Sprintf(`%s="%s"`, key, val.(string))
-		}
+		urloptions[key] = val.(string)
 	}
-
-	connStr := fmt.Sprintf(`user="%s" password="%s" connectString="%s" %s`,
-		args.Username,
-		args.GetPass(),
-		args.DSN(),
-		opts,
-	)
-	return connStr
+	url := go_ora.BuildUrl(args.Server, args.Port, args.Service, args.Username, args.Password, urloptions)
+	return url
 }
 
-func (args *ConnectArgs) DSN() string {
-	return fmt.Sprintf("%s:%d/%s",
-		args.Server,
-		args.Port,
-		args.Service,
-	)
-}
-
-func (args *ConnectArgs) GetPass() string {
+func (args *ConnectArgs) GetPass() {
 	var err error
 	if args.Password == "" {
 		if args.PasswordCommand != "" {
@@ -69,5 +47,4 @@ func (args *ConnectArgs) GetPass() string {
 			panic(err)
 		}
 	}
-	return args.Password
 }

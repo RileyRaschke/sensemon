@@ -43,7 +43,6 @@ func init() {
 
 	viper.SetDefault("collector.polling_interval", "5s")
 
-	viper.SetDefault("db.Driver", "godror")
 	viper.SetDefault("db.Username", strings.ToUpper(os_user.Username))
 	viper.SetDefault("db.Password", "")
 	viper.SetDefault("db.PasswordCommand", "")
