@@ -125,7 +125,7 @@
 
                for(sidx = 0; sidx < SensorId.length; ++sidx){
                      sid = SensorIndex[SensorId[sidx]];
-                     if( sensorData[sid][stamps[i]] != null){
+                     if( sensorData[sid] != null && sensorData[sid][stamps[i]] != null){
                         TempDataArray[sid]['data'].push(sensorData[sid][stamps[i]].temp);
                         HumiDataArray[sid]['data'].push(sensorData[sid][stamps[i]].humi);
                      } else {
