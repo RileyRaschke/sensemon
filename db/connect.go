@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/sijms/go-ora/v2"
+	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
-const DB_TYPE = "oracle"
+const DB_TYPE = "pgx"
 
 type Connection struct {
 	*sqlx.DB
@@ -17,7 +17,7 @@ type Connection struct {
 
 func Connect(args *ConnectArgs) (*Connection, error) {
 	sqlx.BindDriver(DB_TYPE, sqlx.NAMED)
-	c, err := sqlx.Open(DB_TYPE, args.ToConnectionString())
+	c, err := sqlx.Open("postgres", args.ToConnectionString())
 	log.Tracef("%s", args)
 	if err != nil {
 		panic(fmt.Errorf("error in sql.Open: %w", err))
@@ -33,12 +33,12 @@ func Connect(args *ConnectArgs) (*Connection, error) {
 func FromViper(v *viper.Viper) (*Connection, error) {
 	return Connect(
 		&ConnectArgs{
+			Database:        v.GetString("Database"),
 			Username:        v.GetString("Username"),
 			Password:        v.GetString("Password"),
 			PasswordCommand: v.GetString("PasswordCommand"),
 			Server:          v.GetString("Server"),
 			Port:            v.GetInt("Port"),
-			Service:         v.GetString("Service"),
 			Opts:            v.Get("Options").(map[string]any),
 		})
 }

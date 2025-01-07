@@ -1,7 +1,7 @@
 
 -- Create sensorreads table
 CREATE TABLE sensemon.sensorreads (
-    sr_date DATE,
+    sr_date timestamp,
     sr_device_id VARCHAR(30),
     sr_farenheit NUMERIC, -- Replace "number" with NUMERIC
     sr_humidity NUMERIC   -- Replace "number" with NUMERIC
@@ -20,6 +20,8 @@ CREATE TABLE sensemon.sensortype (
     type_id NUMERIC,
     type_name VARCHAR(32)
 );
+
+GRANT select,insert,update,delete ON ALL TABLES IN SCHEMA sensemon to sensemon;
 
 -- Grant privileges to app_sensemon
 GRANT SELECT, INSERT ON sensemon.sensorreads TO app_sensemon;

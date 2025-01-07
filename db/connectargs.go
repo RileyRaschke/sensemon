@@ -1,7 +1,8 @@
 package db
 
 import (
-	go_ora "github.com/sijms/go-ora/v2"
+	"fmt"
+	"net/url"
 )
 
 type ConnectArgs struct {
@@ -10,7 +11,7 @@ type ConnectArgs struct {
 	PasswordCommand  string
 	Server           string
 	Port             int
-	Service          string
+	Database         string
 	ConnectionString string
 	Opts             map[string]interface{}
 }
@@ -23,12 +24,13 @@ func (args *ConnectArgs) String() string {
 
 func (args *ConnectArgs) ToConnectionString() string {
 	args.GetPass()
-	urloptions := make(map[string]string)
-	for key, val := range args.Opts {
-		urloptions[key] = val.(string)
+	values := url.Values{}
+	for key, value := range args.Opts {
+		values.Add(key, value.(string))
 	}
-	url := go_ora.BuildUrl(args.Server, args.Port, args.Service, args.Username, args.Password, urloptions)
-	return url
+	urloptions := values.Encode()
+	conUrl := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?%s", args.Username, url.QueryEscape(args.Password), args.Server, args.Port, args.Database, urloptions)
+	return conUrl
 }
 
 func (args *ConnectArgs) GetPass() {

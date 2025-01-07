@@ -41,14 +41,14 @@ func init() {
 	viper.SetDefault("app.proxyHostsCidr", []string{})
 	viper.SetDefault("app.realIpHeader", "X-Forwarded-For")
 
-	viper.SetDefault("collector.polling_interval", "5s")
+	viper.SetDefault("collector.polling_interval", "9s")
 
 	viper.SetDefault("db.Username", strings.ToUpper(os_user.Username))
 	viper.SetDefault("db.Password", "")
 	viper.SetDefault("db.PasswordCommand", "")
 	viper.SetDefault("db.Server", "localhost")
-	viper.SetDefault("db.Port", "1521")
-	viper.SetDefault("db.Service", "")
+	viper.SetDefault("db.Port", "5432")
+	viper.SetDefault("db.Database", "pgprod")
 	viper.SetDefault("db.Options", make(map[string]string))
 
 	getopt.SetUsage(func() { usage() })
