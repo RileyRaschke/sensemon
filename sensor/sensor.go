@@ -13,10 +13,10 @@ import (
 )
 
 type Sensor struct {
-	DeviceID   string                 `json:"deviceID" db:"SENSOR_DEVICE_ID"`
-	Endpoint   string                 `json:"-" db:"SENSOR_ADDRESS"`
-	SensorType sensortypes.SensorType `json:"type" db:"SENSOR_TYPE_ID"`
-	Name       string                 `json:"name" db:"SENSOR_NAME"`
+	DeviceID   string                 `json:"deviceID" db:"sensor_device_id"`
+	Endpoint   string                 `json:"-" db:"sensor_address"`
+	SensorType sensortypes.SensorType `json:"type" db:"sensor_type_id"`
+	Name       string                 `json:"name" db:"sensor_name"`
 }
 
 type SensorData interface {

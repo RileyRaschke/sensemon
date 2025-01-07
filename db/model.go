@@ -82,14 +82,14 @@ func (dbc *Connection) AllDhtDataInterval(minuteInterval int) ([]*sensor.DhtSens
 	allData := make([]*sensor.DhtSensorData, 0)
 	q := `
 		with rws as (
-		  select trunc ( sr_date ) dy,
-				 trunc ( sr_date, 'mi' ) mins,
-				 :1 / 1440 time_interval,
+		  select date ( sr_date ) dy,
+				 date_trunc ( 'minute', sr_date::date ) mins,
+				 cast( '?' as float) / 1440 time_interval,
 				 sr_device_id,
 				 sr_farenheit,
 				 sr_humidity
 		  from   sensorreads
-         where sr_date >= sysdate-2
+		 where sr_date >= current_timestamp::TIMESTAMP - INTERVAL '2 DAY'
 		), intervals as (
 		  select dy + (
 				   floor ( ( mins - dy ) / time_interval ) * time_interval
@@ -128,18 +128,19 @@ func (dbc *Connection) AllDhtDataInterval(minuteInterval int) ([]*sensor.DhtSens
 }
 
 func (dbc *Connection) AllDhtDataForSensorInterval(deviceId string, minuteInterval int) ([]*sensor.DhtSensorData, error) {
+	// https://stackoverflow.com/questions/6195439/postgres-how-do-you-round-a-timestamp-up-or-down-to-the-nearest-minute
 	allData := make([]*sensor.DhtSensorData, 0)
 	q := `
 		with rws as (
-		  select trunc ( sr_date ) dy,
-				 trunc ( sr_date, 'mi' ) mins,
-				 :1 / 1440 time_interval,
+		  select date( sr_date ) dy,
+				 date_trunc ( 'minute', sr_date ) mins,
+				 cast( $1 as float) / 1440 time_interval,
 				 sr_device_id,
 				 sr_farenheit,
 				 sr_humidity
 		  from   sensorreads
-         where sr_device_id = :2
-		   and sr_date >= sysdate-1
+         where sr_device_id = $2 
+		   and sr_date >= current_timestamp::TIMESTAMP - INTERVAL '1 DAY'
 		), intervals as (
 		  select dy + (
 				   floor ( ( mins - dy ) / time_interval ) * time_interval
@@ -180,20 +181,20 @@ func (dbc *Connection) AllDhtDataForSensorInterval(deviceId string, minuteInterv
 func (dbc *Connection) LatestDhtReadings() ([]*model.LatestDhtSensorData, error) {
 	allData := make([]*model.LatestDhtSensorData, 0)
 	q := `
-	select sensor_name as SENSOR_NAME,
+	select sensor_name as "SENSOR_NAME",
        (select sr_farenheit
           from sensorreads f
          where f.sr_device_id = latest.sensor_device_id
            and f.sr_date = latest.last_entry_date
            limit 1
-         ) as FAHRENHEIT,
+         ) as "FAHRENHEIT",
          (select sr_humidity
           from sensorreads h
          where h.sr_device_id = latest.sensor_device_id
            and h.sr_date = latest.last_entry_date
            limit 1
-         ) as HUMIDITY,
-         latest.LAST_ENTRY_DATE
+         ) as "HUMIDITY",
+         latest.LAST_ENTRY_DATE as "LAST_ENTRY_DATE"
   from ( select sensor_name, sensor_device_id, max(sr_date) last_entry_date
            from sensor, sensorreads
           where sr_device_id = sensor_device_id
