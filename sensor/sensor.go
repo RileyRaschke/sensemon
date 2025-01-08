@@ -26,10 +26,10 @@ type SensorData interface {
 type DhtSensorData struct {
 	rawData   string
 	dataStore map[string]string
-	DeviceID  string    `json:"deviceID" db:"SR_DEVICE_ID"`
-	Date      time.Time `json:"ts" db:"SR_DATE"`
-	Farenheit float32   `json:"fahrenheit" db:"SR_FARENHEIT"`
-	Humidity  float32   `json:"humidity" db:"SR_HUMIDITY"`
+	DeviceID  string    `json:"deviceID" db:"sr_device_id"`
+	Date      time.Time `json:"ts" db:"sr_date"`
+	Farenheit float32   `json:"fahrenheit" db:"sr_farenheit"`
+	Humidity  float32   `json:"humidity" db:"sr_humidity"`
 }
 
 func SensorsFromViper() []*Sensor {

@@ -23,14 +23,14 @@ type TabInfo struct {
 func (dbc *Connection) InsertDhtData(data *sensor.DhtSensorData) error {
 	sql := `insert into sensorreads (
        sr_date,
-	   sr_device_id, 
+	   sr_device_id,
 	   sr_farenheit,
 	   sr_humidity
 	) values (
-	   :SR_DATE,
-	   :SR_DEVICE_ID,
-	   round(:SR_FARENHEIT,2),
-	   round(:SR_HUMIDITY,2) 
+	   :sr_date,
+	   :sr_device_id,
+	   round(:sr_farenheit,2),
+	   round(:sr_humidity,2)
 	)`
 	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
 	defer cancel()
@@ -81,31 +81,39 @@ func (dbc *Connection) AllDhtDataForSensor(deviceId string) ([]*sensor.DhtSensor
 func (dbc *Connection) AllDhtDataInterval(minuteInterval int) ([]*sensor.DhtSensorData, error) {
 	allData := make([]*sensor.DhtSensorData, 0)
 	q := `
-		with rws as (
-		  select date ( sr_date ) dy,
-				 date_trunc ( 'minute', sr_date::date ) mins,
-				 cast( '?' as float) / 1440 time_interval,
-				 sr_device_id,
-				 sr_farenheit,
-				 sr_humidity
-		  from   sensorreads
-		 where sr_date >= current_timestamp::TIMESTAMP - INTERVAL '2 DAY'
-		), intervals as (
-		  select dy + (
-				   floor ( ( mins - dy ) / time_interval ) * time_interval
-				 ) start_datetime,
-				 sr_device_id,
-				 sr_farenheit,
-				 sr_humidity
-		  from   rws
-		)
-		  select start_datetime as sr_date,
-				 sr_device_id,
-				 round(avg(sr_farenheit),2) as sr_farenheit,
-				 round(avg(sr_humidity),2) as sr_humidity
-			from intervals
-		  group  by start_datetime, sr_device_id
-		  order  by start_datetime
+	WITH q_params as (
+	select
+		$1::int as p_interval,
+		2 as p_days_back
+	),
+	intervals AS (
+		SELECT
+			generate_series(
+				(SELECT date_bin(interval '1 min' * p_interval, current_timestamp, current_date)-
+				interval '1 day'* p_days_back),
+				(SELECT MAX(sr_date) FROM sensemon.sensorreads),
+				INTERVAL '1 minute' * p_interval
+			) AS start_time
+			from q_params
+	)
+	SELECT
+		intervals.start_time as sr_date,
+		coalesce(sr_device_id, '') as sr_device_id,
+		--intervals.start_time + INTERVAL '1 minute' * p_interval AS end_time,
+		coalesce(AVG(sr_farenheit),0) AS sr_farenheit,
+		coalesce(AVG(sr_humidity),0) AS sr_humidity
+		--,COUNT(*) AS reading_count
+	FROM
+		intervals
+	left join sensemon.sensorreads q_params
+	on
+		(sr_date >= intervals.start_time
+		AND sr_date < intervals.start_time + INTERVAL '1 minute' * (select p_interval from q_params))
+		or sr_device_id is null
+	GROUP BY
+		sr_device_id, intervals.start_time
+	ORDER BY
+		intervals.start_time
 	`
 	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
 	defer cancel()
@@ -139,7 +147,7 @@ func (dbc *Connection) AllDhtDataForSensorInterval(deviceId string, minuteInterv
 				 sr_farenheit,
 				 sr_humidity
 		  from   sensorreads
-         where sr_device_id = $2 
+         where sr_device_id = $2
 		   and sr_date >= current_timestamp::TIMESTAMP - INTERVAL '1 DAY'
 		), intervals as (
 		  select dy + (

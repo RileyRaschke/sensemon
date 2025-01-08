@@ -1,10 +1,12 @@
 
+drop table sensemon.sensorreads;
+
 -- Create sensorreads table
 CREATE TABLE sensemon.sensorreads (
-    sr_date timestamp,
+    sr_date timestamp with time zone,
     sr_device_id VARCHAR(30),
-    sr_farenheit NUMERIC, -- Replace "number" with NUMERIC
-    sr_humidity NUMERIC   -- Replace "number" with NUMERIC
+    sr_farenheit NUMERIC,
+    sr_humidity NUMERIC
 );
 
 -- Create sensor table
@@ -27,9 +29,4 @@ GRANT select,insert,update,delete ON ALL TABLES IN SCHEMA sensemon to sensemon;
 GRANT SELECT, INSERT ON sensemon.sensorreads TO app_sensemon;
 GRANT SELECT ON sensemon.sensor TO app_sensemon;
 GRANT SELECT ON sensemon.sensortype TO app_sensemon;
-
--- Create synonyms (PostgreSQL uses views for this)
-CREATE VIEW app_sensemon.sensorreads AS SELECT * FROM sensemon.sensorreads;
-CREATE VIEW app_sensemon.sensor AS SELECT * FROM sensemon.sensor;
-CREATE VIEW app_sensemon.sensortype AS SELECT * FROM sensemon.sensortype;
 
