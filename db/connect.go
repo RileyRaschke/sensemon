@@ -23,10 +23,12 @@ func Connect(args *ConnectArgs) (*Connection, error) {
 		panic(fmt.Errorf("error in sql.Open: %w", err))
 	}
 	db := &Connection{c}
-	err = db.Ping()
-	if err != nil {
-		log.Fatalf("Error pinging db: %w", err)
-	}
+	/*
+		err = db.Ping()
+		if err != nil {
+			log.Fatalf("Error pinging db: %w", err)
+		}
+	*/
 	return db, nil
 }
 

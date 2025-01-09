@@ -29,7 +29,8 @@ func (args *ConnectArgs) ToConnectionString() string {
 		values.Add(key, value.(string))
 	}
 	urloptions := values.Encode()
-	conUrl := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?%s", args.Username, url.QueryEscape(args.Password), args.Server, args.Port, args.Database, urloptions)
+	conUrl := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?%s",
+		args.Username, url.QueryEscape(args.Password), args.Server, args.Port, args.Database, urloptions)
 	return conUrl
 }
 

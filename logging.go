@@ -11,8 +11,7 @@ import (
 	"github.com/snowzach/rotatefilehook"
 )
 
-func initLogger(logLevel string) {
-
+func initLogger(logLevel string, logFile string) {
 	level, _ := log.ParseLevel(logLevel)
 
 	formatter := &log.TextFormatter{
@@ -23,7 +22,7 @@ func initLogger(logLevel string) {
 	}
 
 	rotateFileHook, err := rotatefilehook.NewRotateFileHook(rotatefilehook.RotateFileConfig{
-		Filename:   "sensemon.log",
+		Filename:   logFile,
 		MaxSize:    5, // megabytes
 		MaxBackups: 3,
 		MaxAge:     28, //days

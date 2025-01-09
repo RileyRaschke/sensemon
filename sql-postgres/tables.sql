@@ -26,6 +26,7 @@ CREATE TABLE sensemon.sensortype (
 GRANT select,insert,update,delete ON ALL TABLES IN SCHEMA sensemon to sensemon;
 
 -- Grant privileges to app_sensemon
+
 GRANT SELECT, INSERT ON sensemon.sensorreads TO app_sensemon;
 GRANT SELECT ON sensemon.sensor TO app_sensemon;
 GRANT SELECT ON sensemon.sensortype TO app_sensemon;

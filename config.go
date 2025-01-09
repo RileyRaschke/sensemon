@@ -36,6 +36,7 @@ func init() {
 		viper.AddConfigPath(p)
 	}
 	viper.SetDefault("log.level", "TRACE")
+	viper.SetDefault("log.file", "sensemon.log")
 
 	viper.SetDefault("app.port", "3001")
 	viper.SetDefault("app.proxyHostsCidr", []string{})
@@ -71,7 +72,7 @@ func init() {
 		}
 	}
 
-	initLogger(viper.GetString("log.level"))
+	initLogger(viper.GetString("log.level"), viper.GetString("log.file"))
 }
 
 func usage(msg ...string) {
