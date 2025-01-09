@@ -1,5 +1,5 @@
 
-drop table sensemon.sensorreads;
+--drop table sensemon.sensorreads;
 
 -- Create sensorreads table
 CREATE TABLE sensemon.sensorreads (
@@ -16,6 +16,9 @@ CREATE TABLE sensemon.sensor (
     sensor_address VARCHAR(128),
     sensor_name VARCHAR(64)
 );
+
+create index sensorreads_sr_date_idx on sensemon.sensorreads(sr_date);
+create index sensorreads_sr_device_id_idx  on sensemon.sensorreads(sr_device_id);
 
 -- Create sensortype table
 CREATE TABLE sensemon.sensortype (
