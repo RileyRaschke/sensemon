@@ -26,7 +26,7 @@ CREATE TABLE sensemon.sensortype (
     type_name VARCHAR(32)
 );
 
-GRANT select,insert,update,delete ON ALL TABLES IN SCHEMA sensemon to sensemon;
+GRANT truncate,select,insert,update,delete ON ALL TABLES IN SCHEMA sensemon to sensemon;
 
 -- Grant privileges to app_sensemon
 
